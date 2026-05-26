@@ -1,6 +1,5 @@
 # Flint
 
-
 *The best app for journaling on paper*
 ---
 
