@@ -1,8 +1,7 @@
-## Flint
+# Flint
 
 *The best app for journaling on paper*
 
----
 
 ### What is Flint?
 
