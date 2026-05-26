@@ -30,99 +30,96 @@ struct CompleteFlowSheet: View {
 
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: 16) {
-                Capsule()
-                    .fill(FlintColors.mutedGray.opacity(0.5))
-                    .frame(width: 36, height: 5)
-                    .padding(.top, 12)
-                
-                Label(dayAndSlot, systemImage: prompt.timeSlot.systemIcon)
-                    .font(.system(.headline, design: .serif))
-                    .foregroundStyle(FlintColors.warmWhite)
-                    .padding(.top, 4)
-                
-                // Optional in-app note
-                EntryEditor(prompt: prompt)
-                    .padding(.horizontal)
-                
-                if let previewImage {
-                    Image(uiImage: previewImage)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(maxHeight: 200)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                        .padding(.horizontal)
-                }
-                
-                // Camera and photo picker side by side
-                HStack(spacing: 12) {
-                    Button(action: { showCamera = true }) {
-                        Label("Take Photo", systemImage: "camera.fill")
-                            .font(.headline)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 14)
-                            .foregroundStyle(FlintColors.warmWhite)
-                            .background(
-                                RoundedRectangle(cornerRadius: 14)
-                                    .fill(.ultraThinMaterial)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 14)
-                                            .stroke(FlintColors.warmWhite.opacity(0.15), lineWidth: 1)
-                                    )
-                            )
-                    }
-                    .buttonStyle(.plain)
-                    
-                    PhotosPicker(selection: $selectedPhoto, matching: .images) {
-                        Label("Upload Photo", systemImage: "photo.on.rectangle")
-                            .font(.headline)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 14)
-                            .foregroundStyle(FlintColors.warmWhite)
-                            .background(
-                                RoundedRectangle(cornerRadius: 14)
-                                    .fill(.ultraThinMaterial)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 14)
-                                            .stroke(FlintColors.warmWhite.opacity(0.15), lineWidth: 1)
-                                    )
-                            )
-                    }
-                    .buttonStyle(.plain)
-                }
+        VStack(spacing: 16) {
+            Capsule()
+                .fill(FlintColors.mutedGray.opacity(0.5))
+                .frame(width: 36, height: 5)
+                .padding(.top, 12)
+            
+            Label(dayAndSlot, systemImage: prompt.timeSlot.systemIcon)
+                .font(.system(.headline, design: .serif))
+                .foregroundStyle(FlintColors.warmWhite)
+                .padding(.top, 4)
+            
+            // Optional in-app note
+            EntryEditor(prompt: prompt)
                 .padding(.horizontal)
-                
-                Button(action: complete) {
-                    Label("Mark Complete", systemImage: "checkmark.circle.fill")
+            
+            if let previewImage {
+                Image(uiImage: previewImage)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(maxHeight: 200)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .padding(.horizontal)
+            }
+            
+            // Camera and photo picker side by side
+            HStack(spacing: 12) {
+                Button(action: { showCamera = true }) {
+                    Label("Take Photo", systemImage: "camera.fill")
                         .font(.headline)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)
-                        .foregroundStyle(FlintColors.charcoal)
+                        .foregroundStyle(FlintColors.warmWhite)
                         .background(
                             RoundedRectangle(cornerRadius: 14)
-                                .fill(FlintColors.warmAmber)
+                                .fill(.ultraThinMaterial)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 14)
-                                        .stroke(FlintColors.softAmber.opacity(0.4), lineWidth: 1)
+                                        .stroke(FlintColors.warmWhite.opacity(0.15), lineWidth: 1)
                                 )
                         )
                 }
                 .buttonStyle(.plain)
-                .padding(.horizontal)
                 
-                Spacer().frame(height: 8)
-            }
-            .background(
-                GeometryReader { geo in
-                    Color.clear.preference(
-                        key: SheetHeightKey.self,
-                        value: geo.size.height
-                    )
+                PhotosPicker(selection: $selectedPhoto, matching: .images) {
+                    Label("Upload Photo", systemImage: "photo.on.rectangle")
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .foregroundStyle(FlintColors.warmWhite)
+                        .background(
+                            RoundedRectangle(cornerRadius: 14)
+                                .fill(.ultraThinMaterial)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 14)
+                                        .stroke(FlintColors.warmWhite.opacity(0.15), lineWidth: 1)
+                                )
+                        )
                 }
-            )
+                .buttonStyle(.plain)
+            }
+            .padding(.horizontal)
+            
+            Button(action: complete) {
+                Label("Mark Complete", systemImage: "checkmark.circle.fill")
+                    .font(.headline)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .foregroundStyle(FlintColors.charcoal)
+                    .background(
+                        RoundedRectangle(cornerRadius: 14)
+                            .fill(FlintColors.warmAmber)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 14)
+                                    .stroke(FlintColors.softAmber.opacity(0.4), lineWidth: 1)
+                            )
+                    )
+            }
+            .buttonStyle(.plain)
+            .padding(.horizontal)
+            
+            Spacer().frame(height: 8)
         }
-        .scrollDismissesKeyboard(.interactively)
+        .background(
+            GeometryReader { geo in
+                Color.clear.preference(
+                    key: SheetHeightKey.self,
+                    value: geo.size.height
+                )
+            }
+        )
         .background(FlintColors.darkCharcoal)
         .onPreferenceChange(SheetHeightKey.self) { height in
             sheetHeight = height
@@ -145,6 +142,7 @@ struct CompleteFlowSheet: View {
                 }
             }
         }
+
     }
     
     private func complete() {

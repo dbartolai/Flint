@@ -1,6 +1,5 @@
 import SwiftUI
 import SwiftData
-import FoundationModels
 import EventKit
 
 struct ContentView: View {
@@ -13,6 +12,7 @@ struct ContentView: View {
     @State private var todayEvents: [EKEvent] = []
     @State private var relevantReminders: [EKReminder] = []
     @State private var hasLoadedContext = false
+    @State private var generationError: String?
     
     private var todaysPromptForSlot: Prompt? {
         let calendar = Calendar.current
@@ -22,21 +22,11 @@ struct ContentView: View {
     }
     
     private var nextSlotTime: String {
-        switch currentSlot {
-        case .morning: return "12:00 PM"
-        case .afternoon: return "5:00 PM"
-        case .evening: return "9:00 PM"
-        case .night: return "5:00 AM"
-        }
+        currentSlot.nextStartTimeText
     }
     
     private var nextSlot: TimeSlot {
-        switch currentSlot {
-        case .morning: return .afternoon
-        case .afternoon: return .evening
-        case .evening: return .night
-        case .night: return .morning
-        }
+        currentSlot.next
     }
     
     var body: some View {
@@ -67,7 +57,6 @@ struct ContentView: View {
                 Spacer()
                 
                 if isLoading {
-                    // With this:
                     VStack(spacing: 12) {
                         Image(systemName: "flame")
                             .font(.system(size: 32))
@@ -140,6 +129,14 @@ struct ContentView: View {
                 }
                 
                 Spacer()
+
+                if let generationError {
+                    Text(generationError)
+                        .font(.caption)
+                        .foregroundStyle(FlintColors.ember)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
+                }
                 
                 if todaysPromptForSlot == nil && !isLoading {
                     Button(action: generatePrompt) {
@@ -204,14 +201,22 @@ struct ContentView: View {
         .onAppear {
             loadContext()
         }
+        .task {
+            await refreshCurrentSlot()
+        }
 
     }
     
+    @MainActor
     private func generatePrompt() {
         let slot = TimeSlot.current()
+        currentSlot = slot
+        generationError = nil
         isLoading = true
         
-        Task {
+        Task { @MainActor in
+            defer { isLoading = false }
+
             let service = EventKitService()
             await service.requestAccess()
             
@@ -222,11 +227,18 @@ struct ContentView: View {
                 let result = try await generator.generate(context: context)
                 let saved = Prompt(timestamp: Date(), prompt: result, slot: slot)
                 modelContext.insert(saved)
+                try modelContext.save()
             } catch {
-                // Handle error
+                generationError = error.localizedDescription
             }
-            
-            isLoading = false
+        }
+    }
+
+    @MainActor
+    private func refreshCurrentSlot() async {
+        while !Task.isCancelled {
+            currentSlot = TimeSlot.current()
+            try? await Task.sleep(nanoseconds: 60_000_000_000)
         }
     }
     

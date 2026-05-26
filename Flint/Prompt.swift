@@ -15,11 +15,15 @@ enum TimeSlot: String, Codable, CaseIterable {
     case night      // 9pm - 5am
     
     static func current() -> TimeSlot {
-        let hour = Calendar.current.component(.hour, from: Date())
+        slot(for: Date())
+    }
+
+    static func slot(for date: Date, calendar: Calendar = .current) -> TimeSlot {
+        let hour = calendar.component(.hour, from: date)
         switch hour {
         case 5..<12: return .morning
         case 12..<17: return .afternoon
-        case 17..<20: return .evening
+        case 17..<21: return .evening
         default: return .night
         }
     }
@@ -39,6 +43,24 @@ enum TimeSlot: String, Codable, CaseIterable {
         case .afternoon: return "sun.max.fill"
         case .evening: return "sunset.fill"
         case .night: return "moon.fill"
+        }
+    }
+
+    var next: TimeSlot {
+        switch self {
+        case .morning: return .afternoon
+        case .afternoon: return .evening
+        case .evening: return .night
+        case .night: return .morning
+        }
+    }
+
+    var nextStartTimeText: String {
+        switch self {
+        case .morning: return "12:00 PM"
+        case .afternoon: return "5:00 PM"
+        case .evening: return "9:00 PM"
+        case .night: return "5:00 AM"
         }
     }
     

@@ -35,6 +35,7 @@ struct PromptDetailView: View {
                         Text(note)
                             .font(.system(.body, design: .serif))
                             .foregroundColor(FlintColors.warmWhite.opacity(0.85))
+                            .padding(.horizontal)
                     }
                     
                     if let imageData = prompt.imageData,

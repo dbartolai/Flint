@@ -7,15 +7,24 @@ import Foundation
 
 struct PromptGenerator {
     let slot: TimeSlot
-    
-    private var apiKey: String {
-            Bundle.main.infoDictionary?["AnthropicAPIKey"] as? String ?? ""
-        }
+    private let apiKeyProvider: () -> String
 
     private let model = "claude-haiku-4-5-20251001"
     private let endpoint = URL(string: "https://api.anthropic.com/v1/messages")!
+
+    init(slot: TimeSlot, apiKeyProvider: @escaping () -> String = {
+        Bundle.main.infoDictionary?["AnthropicAPIKey"] as? String ?? ""
+    }) {
+        self.slot = slot
+        self.apiKeyProvider = apiKeyProvider
+    }
     
     func generate(context: String) async throws -> String {
+        let apiKey = apiKeyProvider().trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !apiKey.isEmpty else {
+            throw FlintError.missingAPIKey
+        }
+
         var request = URLRequest(url: endpoint)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "content-type")
@@ -73,32 +82,50 @@ struct PromptGenerator {
         ]
         
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
-        
-        print("[Flint] API Key present: \(!apiKey.isEmpty)")
-        print("[Flint] API Key prefix: \(String(apiKey.prefix(10)))")
-        
+
         let (data, response) = try await URLSession.shared.data(for: request)
-        
-        let httpResponse = response as? HTTPURLResponse
-        print("[Flint] Status: \(httpResponse?.statusCode ?? -1)")
-        print("[Flint] Body: \(String(data: data, encoding: .utf8) ?? "nil")")
-        
-        guard httpResponse?.statusCode == 200 else {
+
+        guard let httpResponse = response as? HTTPURLResponse else {
             throw FlintError.generationFailed
         }
+
+        guard httpResponse.statusCode == 200 else {
+            throw FlintError.apiRequestFailed(statusCode: httpResponse.statusCode)
+        }
         
-        let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
-        let content = json?["content"] as? [[String: Any]]
-        let text = content?.first?["text"] as? String
+        let decoded = try JSONDecoder().decode(AnthropicResponse.self, from: data)
+        let text = decoded.content.compactMap(\.text).first
         
-        guard let prompt = text?.trimmingCharacters(in: .whitespacesAndNewlines) else {
+        guard let prompt = text?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !prompt.isEmpty else {
             throw FlintError.generationFailed
         }
         
         return prompt
     }
+
+    private struct AnthropicResponse: Decodable {
+        let content: [ContentBlock]
+    }
+
+    private struct ContentBlock: Decodable {
+        let text: String?
+    }
 }
 
-enum FlintError: Error {
+enum FlintError: Error, LocalizedError {
+    case missingAPIKey
+    case apiRequestFailed(statusCode: Int)
     case generationFailed
+
+    var errorDescription: String? {
+        switch self {
+        case .missingAPIKey:
+            return "Missing Anthropic API key."
+        case .apiRequestFailed(let statusCode):
+            return "Prompt generation failed with status \(statusCode)."
+        case .generationFailed:
+            return "Prompt generation failed."
+        }
+    }
 }
