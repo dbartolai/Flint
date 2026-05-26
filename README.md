@@ -18,7 +18,7 @@ Designing a mobile application is so different from writing code for web, OS, or
 
 I definitely want to continue working on Flint as a mobile project, and continue to create more mobile apps in the future. Distributions seems like it would be much easier, and I see so much potential for a tool when it's already in your pocket anyways.
 
-### Future Additiona
+### Future Additions
 
 I have so many ideas for future additions to this application. Usually when I work I set a timer for 50 minutes with a concrete goal. Then afterwards, I write about what I accomplished, where I left off, and where to pick up next time. I think this would be a perfect place to log that info. 
 
